@@ -1,0 +1,16 @@
+# NUNCA subir: aquí vive el token del bot
+telegram.json
+
+# Estado del puente (sesión de Claude, offset de Telegram)
+estado.json
+
+# Basura habitual
+node_modules/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+Thumbs.db
+*.mp3
+*.ogg
+*.oga

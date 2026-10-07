@@ -1,0 +1,13 @@
+{
+  "token": "8123456789:AAH-pon-aqui-el-tuyo",
+  "chat_id": "123456789",
+  "repo": "..",
+  "modelo": "sonnet",
+  "tools": "Read,Grep,Glob",
+  "tz": "America/Caracas",
+  "voz": "es-VE-SebastianNeural",
+  "velocidad": "+12%",
+  "hablar": true,
+  "transcribir": false,
+  "prompt": "Eres mi asistente personal por Telegram. Antes de responder algo sobre mis cosas, lee los archivos del proyecto en vez de suponer. FORMATO OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa hablada natural SIN markdown, sin listas, sin encabezados, sin emojis: tu texto se convierte en nota de voz. Como si hablaras por telefono."
+}
