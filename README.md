@@ -22,7 +22,49 @@ telegram → node → claude -p → edge-tts → ogg/opus → sendVoice
 
 ---
 
-# La forma rápida
+# La forma más fácil: que Claude Code te guíe
+
+Si tienes Claude Code instalado, no hace falta que leas nada de lo de abajo. Clona el repo, abre Claude Code ahí dentro y pégale el prompt. Él lee el `CLAUDE.md` de este repo y te lleva de la mano, un paso a la vez.
+
+```bash
+git clone https://github.com/mauriciopu/puente-telegram-claude.git puente
+cd puente
+claude
+```
+
+Y ya dentro de Claude Code, pega esto:
+
+```
+Acabo de clonar este repo y quiero dejar el bot funcionando.
+
+Lee el CLAUDE.md y el README de esta carpeta y guiame paso a paso,
+asumiendo que no se nada de programacion. Una sola cosa a la vez:
+me das un paso, esperas a que te diga que lo hice, y sigues.
+
+Empieza por decirme que voy a conseguir y que necesito tener instalado.
+No me pidas nunca el token del bot: eso va directo en el instalador.
+```
+
+Si algo se rompe en el camino, le pegas el error y lo resuelve ahí mismo. Para eso está.
+
+---
+
+# Privacidad
+
+**Todo corre en tu máquina.** El puente solo habla con `api.telegram.org` y con el `claude` que ya tienes instalado. No hay servidor intermedio, no hay telemetría, no hay analítica, no hay ninguna llamada a nada del autor. Son tres archivos de código y los puedes leer enteros en diez minutos: `puente.js`, `a-opus.py` y `transcribir.py`.
+
+**Usa tu cuenta.** Las respuestas las da tu propia suscripción de Claude Code, con tu sesión. Tus conversaciones con tu bot quedan entre tu Telegram, tu máquina y tu cuenta de Anthropic, igual que cuando usas Claude Code en la terminal.
+
+**El autor de este repo no ve nada de lo tuyo.** Ni tu token, ni tu `chat_id`, ni una sola palabra de lo que hables con tu bot. Lo único visible desde el lado de GitHub es lo público de siempre: si le das estrella, si lo forkeas o si abres un issue. Nada de eso es obligatorio.
+
+**Dos cuidados tuyos:**
+
+1. **No le pegues el token del bot a Claude en el chat.** El token va directo en el instalador cuando lo pida. Si se te escapa, `/revoke` en BotFather y usas el nuevo.
+2. **`telegram.json` ya está en el `.gitignore`.** Si subes este repo a tu propio GitHub, el token no viaja. Revísalo antes del primer push igual.
+
+---
+
+# La forma rápida (sin Claude Code)
 
 Hay un instalador que hace todo menos la única cosa que no se puede automatizar: crear el bot en BotFather, que es una conversación de Telegram y la tienes que tener tú.
 
