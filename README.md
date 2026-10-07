@@ -28,7 +28,7 @@ Hay un instalador que hace todo menos la única cosa que no se puede automatizar
 
 ```bash
 cd mi-bóveda
-git clone https://github.com/<usuario>/puente-telegram-claude.git puente
+git clone https://github.com/mauriciopu/puente-telegram-claude.git puente
 cd puente
 node instalar.js
 ```
@@ -169,7 +169,7 @@ mi-bóveda/
 
 ```bash
 cd mi-bóveda
-git clone https://github.com/<usuario>/puente-telegram-claude.git puente
+git clone https://github.com/mauriciopu/puente-telegram-claude.git puente
 cd puente
 cp telegram.ejemplo.json telegram.json
 ```
