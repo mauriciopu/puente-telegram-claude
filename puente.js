@@ -19,7 +19,33 @@ const TZ          = CFG.tz || 'America/Caracas';
 const PY          = CFG.python || 'python';   // el instalador detecta cuál sirve
 const WIN         = process.platform === 'win32';
 
-let estado = { offset: 0, sesion: null, hablar: CFG.hablar !== false };
+// ───── Candado opcional ──────────────────────────────────────────
+// Por defecto está apagado y no hace falta. El filtro por chat_id ya impide
+// que otra persona use el bot desde su propio Telegram. El candado cubre otra
+// cosa distinta: que alguien que agarre tu teléfono ya desbloqueado tampoco
+// pueda entrar. Si manejas cosas sensibles, enciéndelo; si no, déjalo así.
+const AUTH = CFG.auth || { enabled: false };
+
+function normalizar(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9ñ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Solo se guarda el hash de la frase, nunca la frase. Se normaliza antes para
+// que no importen mayúsculas, tildes ni signos al escribirla desde el teléfono.
+function esFraseClave(s) {
+  if (!AUTH.passhash) return false;
+  return crypto.createHash('sha256').update(normalizar(s)).digest('hex') === AUTH.passhash;
+}
+
+function sesionVencida() {
+  const mins = AUTH.lock_minutes == null ? 30 : AUTH.lock_minutes;
+  if (!mins) return false;                       // 0 = no caduca nunca
+  return (Date.now() - (estado.actividad || 0)) > mins * 60000;
+}
+
+let estado = { offset: 0, sesion: null, hablar: CFG.hablar !== false,
+               abierta: false, actividad: 0 };
 try { Object.assign(estado, JSON.parse(fs.readFileSync(ESTADO, 'utf8'))); } catch (e) {}
 const guardar = () => fs.writeFileSync(ESTADO, JSON.stringify(estado, null, 2));
 
@@ -224,6 +250,30 @@ async function atender(msg) {
   }
   if (!texto) return;
 
+  // ───── Candado, si está encendido ─────
+  if (AUTH.enabled) {
+    if (estado.abierta && sesionVencida()) { estado.abierta = false; guardar(); }
+
+    if (!estado.abierta) {
+      if (esFraseClave(texto)) {
+        estado.abierta = true; estado.actividad = Date.now(); guardar();
+        // La frase no puede quedar escrita en el chat.
+        tg('deleteMessage', { chat_id: chatId, message_id: msg.message_id }).catch(() => {});
+        return void tg('sendMessage', { chat_id: chatId, text: 'Abierto.' });
+      }
+      // Respuesta neutra: al que no pasa no se le dice que hay un candado.
+      return void tg('sendMessage', { chat_id: chatId,
+        text: AUTH.respuesta || '⚙️ Servicio no disponible por ahora.' });
+    }
+
+    estado.actividad = Date.now(); guardar();
+
+    if (texto === '/cerrar') {
+      estado.abierta = false; guardar();
+      return void tg('sendMessage', { chat_id: chatId, text: 'Cerrado.' });
+    }
+  }
+
   if (texto === '/nueva') {
     estado.sesion = null; guardar();
     return void tg('sendMessage', { chat_id: chatId, text: 'Conversación nueva.' });
@@ -237,7 +287,10 @@ async function atender(msg) {
     return void tg('sendMessage', { chat_id: chatId,
       text: `Vivo. Modelo ${CFG.modelo || 'sonnet'}.`
           + ` Sesión ${estado.sesion ? 'activa' : 'nueva'}.`
-          + ` Voz ${estado.hablar ? 'prendida' : 'apagada'}.` });
+          + ` Voz ${estado.hablar ? 'prendida' : 'apagada'}.`
+          + (AUTH.enabled
+              ? ` Candado puesto, cierra a los ${AUTH.lock_minutes == null ? 30 : AUTH.lock_minutes} min sin uso.`
+              : ' Sin candado.') });
   }
 
   // El "escribiendo..." caduca a los 5 s: hay que refrescarlo.

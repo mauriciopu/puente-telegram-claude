@@ -303,6 +303,7 @@ Pon `"transcribir": true` en `telegram.json` y reinicia con `pm2 restart puente-
 | `/nueva` | Olvida la conversación y empieza de cero |
 | `/ping` | Dice si está vivo, con qué modelo y si la voz está prendida |
 | `/voz` | Prende o apaga las notas de voz (útil en reuniones) |
+| `/cerrar` | Cierra la sesión a mano (solo si pusiste candado) |
 
 ---
 
@@ -322,6 +323,37 @@ Pon `"transcribir": true` en `telegram.json` y reinicia con `pm2 restart puente-
 | `hablar` | `true` para que mande nota de voz además del texto |
 | `transcribir` | `true` para entender tus notas de voz |
 | `prompt` | Se añade al system prompt de Claude en cada llamada |
+| `auth` | El candado. `enabled` apagado por defecto; ver abajo |
+
+---
+
+## Candado (opcional)
+
+El filtro por `chat_id` ya impide que otra persona use tu bot desde su Telegram. El candado cubre un caso distinto: **que alguien que agarre tu teléfono ya desbloqueado tampoco pueda entrar.** Si tienes el bot apuntando a notas personales, vale la pena. Si no, déjalo apagado.
+
+El instalador te lo pregunta. Si prefieres ponerlo después, en `telegram.json`:
+
+```json
+"auth": {
+  "enabled": true,
+  "passhash": "<sha256 de tu frase normalizada>",
+  "lock_minutes": 30,
+  "respuesta": "⚙️ Servicio no disponible por ahora."
+}
+```
+
+Cómo funciona:
+
+- Para abrir, le escribes **la frase** al bot. Él la valida y **borra tu mensaje del chat**, para que el secreto no quede escrito ahí.
+- Al que no acierta le responde algo neutro. Nunca se le dice que hay un candado detrás.
+- Se cierra solo tras `lock_minutes` sin usarlo. Con `0` no caduca nunca.
+- `/cerrar` lo cierra en el acto.
+
+**Solo se guarda el hash**, nunca la frase. Se normaliza antes de comparar, así que no importan mayúsculas, tildes ni signos cuando la escribas desde el teléfono. Para generar el hash a mano:
+
+```bash
+node -e "console.log(require('crypto').createHash('sha256').update('mi frase secreta').digest('hex'))"
+```
 
 ---
 

@@ -9,5 +9,11 @@
   "velocidad": "+12%",
   "hablar": true,
   "transcribir": false,
-  "prompt": "Eres mi asistente personal por Telegram. Antes de responder algo sobre mis cosas, lee los archivos del proyecto en vez de suponer. FORMATO OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa hablada natural SIN markdown, sin listas, sin encabezados, sin emojis: tu texto se convierte en nota de voz. Como si hablaras por telefono."
+  "prompt": "Eres mi asistente personal por Telegram. Antes de responder algo sobre mis cosas, lee los archivos del proyecto en vez de suponer. FORMATO OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa hablada natural SIN markdown, sin listas, sin encabezados, sin emojis: tu texto se convierte en nota de voz. Como si hablaras por telefono.",
+  "auth": {
+    "enabled": false,
+    "passhash": "",
+    "lock_minutes": 30,
+    "respuesta": "⚙️ Servicio no disponible por ahora."
+  }
 }

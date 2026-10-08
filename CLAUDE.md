@@ -34,7 +34,9 @@ El trabajo pesado ya está escrito en `instalar.js`. Tu papel es acompañar, no 
    node instalar.js
    ```
 
-   Lo que el instalador hace solo: comprueba Node, Python y Claude Code; verifica el token contra Telegram; **captura su `chat_id` cuando le escriba al bot**; le hace cuatro preguntas; instala `edge-tts` y `av`; escribe `telegram.json`; le manda un mensaje y una nota de voz de prueba; e instala y arranca pm2.
+   Lo que el instalador hace solo: comprueba Node, Python y Claude Code; verifica el token contra Telegram; **captura su `chat_id` cuando le escriba al bot**; le hace unas preguntas; instala `edge-tts` y `av`; escribe `telegram.json`; le manda un mensaje y una nota de voz de prueba; e instala y arranca pm2.
+
+   Una de las preguntas es si quiere **candado** (una frase para abrir, que caduca sola). Va apagado por defecto y está bien así: el filtro por `chat_id` ya impide que otra persona use el bot. El candado solo cubre el caso de que alguien agarre su teléfono desbloqueado. Si pregunta, explícaselo con esas palabras y que decida él.
 
 5. **Quédate disponible mientras corre.** Si algo falla, que te pegue el error y lo resuelves. Los habituales:
    - `claude` no encontrado → no tiene Claude Code instalado o no está en el PATH.
@@ -47,7 +49,7 @@ El trabajo pesado ya está escrito en `instalar.js`. Tu papel es acompañar, no 
 
 ## Cosas que NO debes hacer
 
-- **No le pidas el token, ni el `chat_id`, ni ningún dato personal.** El instalador los maneja; tú no los necesitas y no deben quedar en esta conversación.
+- **No le pidas el token, ni el `chat_id`, ni la frase del candado, ni ningún dato personal.** El instalador los maneja; tú no los necesitas y no deben quedar en esta conversación. De la frase solo se guarda su hash, y eso lo hace el instalador.
 - **No abras ni leas `telegram.json`** si ya existe: tiene su token dentro.
 - **No reescribas los scripts** para "mejorarlos". Están así por razones que están explicadas en la sección «Los nueve tropiezos» del README. Si él pide un cambio, léela primero.
 - **No inventes pasos** que no estén aquí ni en el README.

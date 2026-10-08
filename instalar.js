@@ -233,6 +233,41 @@ async function main() {
     voz = await texto('  ¿Cuál voz?', voz);
   }
 
+  // ── Candado, opcional ──────────────────────────────────────────
+  console.log('');
+  console.log(gris('  El bot ya solo te atiende a ti: nadie más puede escribirle.'));
+  console.log(gris('  El candado cubre otra cosa: que alguien que agarre tu teléfono'));
+  console.log(gris('  desbloqueado tampoco pueda entrar. Pide una frase para abrir y'));
+  console.log(gris('  se vuelve a cerrar solo tras un rato sin usarlo.'));
+  console.log('');
+
+  const auth = { enabled: false };
+  if (await si('¿Le pongo candado?', false)) {
+    console.log(gris('    Se guarda solo el hash de la frase, nunca la frase.'));
+    console.log(gris('    No importan mayúsculas, tildes ni signos al escribirla.'));
+    let frase = '';
+    for (;;) {
+      frase = await texto('  Frase para abrir:');
+      const limpia = frase.toLowerCase().normalize('NFD')
+        .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9ñ ]/g, '')
+        .replace(/\s+/g, ' ').trim();
+      if (limpia.length >= 6) { frase = limpia; break; }
+      mal('Muy corta. Usa algo de al menos seis letras, mejor varias palabras.');
+    }
+    auth.enabled = true;
+    auth.passhash = crypto.createHash('sha256').update(frase).digest('hex');
+
+    const mins = await texto('  ¿A los cuántos minutos sin usarlo se cierra? (0 = nunca)', '30');
+    auth.lock_minutes = Math.max(0, parseInt(mins, 10) || 0);
+    auth.respuesta = '⚙️ Servicio no disponible por ahora.';
+
+    ok(`Candado puesto${auth.lock_minutes ? `, cierra a los ${auth.lock_minutes} min` : ', sin caducidad'}`);
+    nota('Para abrir, le escribes la frase al bot. Él la borra del chat al validarla.');
+    nota('Para cerrar a mano: /cerrar');
+  } else {
+    nota('Sin candado. Lo puedes encender después en telegram.json.');
+  }
+
   // ── 5. Dependencias de Python ──────────────────────────────────
   if (hablar) {
     titulo('5 · Instalando la voz');
@@ -268,6 +303,7 @@ async function main() {
     velocidad: '+12%',
     hablar,
     transcribir: false,
+    auth,
     prompt: 'Eres mi asistente personal por Telegram. Antes de responder algo sobre '
           + 'mis cosas, lee los archivos del proyecto en vez de suponer. FORMATO '
           + 'OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa hablada '
