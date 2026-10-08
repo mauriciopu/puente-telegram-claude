@@ -81,7 +81,7 @@ El instalador:
 2. Te explica cómo sacar el token en BotFather y te lo pide.
 3. Verifica el token contra Telegram y te dice qué bot es.
 4. Te manda a abrir tu bot y **captura tu `chat_id` solo** en cuanto le escribas.
-5. Te hace cuatro preguntas: carpeta, modelo, zona horaria y voz.
+5. Te pregunta lo importante —carpeta, modelo, zona horaria, voz y si quieres candado— explicándote cada cosa, y al final te ofrece revisar los ajustes finos uno por uno.
 6. Instala `edge-tts` y `av`.
 7. Escribe `telegram.json`.
 8. **Prueba de punta a punta:** te manda un mensaje y una nota de voz de verdad a tu Telegram.
@@ -309,21 +309,52 @@ Pon `"transcribir": true` en `telegram.json` y reinicia con `pm2 restart puente-
 
 ## Configuración
 
-| Clave | Qué es |
-|---|---|
-| `token` | El de BotFather |
-| `chat_id` | El tuyo. Es el único que el bot atiende |
-| `repo` | Carpeta que Claude puede leer, relativa a esta. Por defecto `..` |
-| `modelo` | `sonnet`, `opus`, `haiku`… |
-| `tools` | Herramientas permitidas. **Déjalo en solo lectura** |
-| `tz` | Tu zona horaria IANA, para el sello de hora |
-| `python` | Con qué comando llamar a Python (`python`, `python3`, `py`) |
-| `voz` | Voz de edge-tts |
-| `velocidad` | `+12%` funciona bien |
-| `hablar` | `true` para que mande nota de voz además del texto |
-| `transcribir` | `true` para entender tus notas de voz |
-| `prompt` | Se añade al system prompt de Claude en cada llamada |
-| `auth` | El candado. `enabled` apagado por defecto; ver abajo |
+Todo vive en `telegram.json`. El instalador te pregunta lo importante y pone valores sensatos en el resto; **cualquiera de estos lo puedes cambiar después** editando el archivo y reiniciando con `pm2 restart puente-claude`.
+
+### Lo que te pregunta el instalador
+
+| Clave | Por defecto | Qué hace |
+|---|---|---|
+| `token` | — | El de BotFather |
+| `chat_id` | — | El tuyo. Es el único chat que el bot atiende |
+| `repo` | `".."` | Carpeta que Claude puede leer, relativa a esta. Apúntala a tu bóveda, **nunca a la raíz del disco** |
+| `modelo` | `"sonnet"` | `sonnet` equilibrado · `opus` más capaz y lento · `haiku` el más rápido |
+| `tz` | la detectada | Tu zona horaria IANA. Si queda mal, el bot se equivoca de hora al saludarte |
+| `voz` | `"es-VE-SebastianNeural"` | Voz de edge-tts. Lístalas con `python -m edge_tts --list-voices` |
+| `hablar` | `true` | Si además del texto te manda la respuesta como nota de voz |
+
+### Ajustes finos
+
+El instalador los ofrece al final; si dices que no, quedan así.
+
+| Clave | Por defecto | Qué hace | Cuándo tocarlo |
+|---|---|---|---|
+| `velocidad` | `"+12%"` | Ritmo de la voz | A `+0%` suena lenta y funeraria; por encima de `+25%` se atropella |
+| `volumen` | `"+20%"` | Volumen de la voz | Súbelo si la oyes en la calle, bájalo si la oyes con audífonos |
+| `tools` | `"Read,Grep,Glob"` | Qué puede hacer Claude | **Déjalo en solo lectura.** Añadir `Write` o `Bash` le deja cambiar archivos y ejecutar comandos desde un chat de teléfono |
+| `transcribir` | `false` | Si entiende tus notas de voz | Ponlo en `true` cuando hayas instalado `faster-whisper` |
+| `modelo_whisper` | `"medium"` | Qué tan fina es la transcripción | `small` (~500 MB) si tu máquina sufre; `large-v3` si te sobra |
+| `timeout_ms` | `300000` | Cuánto espera una respuesta antes de rendirse | Súbelo si le pides análisis largos que se cortan |
+| `trozo_max` | `3500` | Cada cuántos caracteres parte los mensajes | Telegram corta en 4096, así que no pases de ahí |
+| `espera_telegram` | `50` | Segundos de long polling | Casi nunca hace falta tocarlo |
+| `python` | el detectado | Con qué comando llamar a Python | Si tienes varios Python, aquí fijas cuál |
+| `prompt` | ver abajo | Instrucción que se le añade a Claude en cada mensaje | Para cambiar su tono o lo que debe leer primero |
+| `auth` | apagado | El candado. Ver la sección propia | Si manejas cosas sensibles |
+
+### Sobre el `prompt`
+
+Es lo que más cambia cómo se comporta. Dos cuidados:
+
+1. **No metas comillas dobles.** Se le pasa a Claude como argumento de línea de comandos y en Windows las comillas lo parten.
+2. **Si usas notas de voz, no quites la regla del formato.** Esa parte es la que hace que la voz suene natural: sin ella el modelo responde con listas y negritas, y el TTS te lee los asteriscos en voz alta.
+
+```
+FORMATO OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa
+hablada natural SIN markdown, sin listas, sin encabezados, sin emojis:
+tu texto se convierte en nota de voz. Como si hablaras por telefono.
+```
+
+Si apagas `hablar`, puedes quitarla y pedirle respuestas largas y bien formateadas.
 
 ---
 

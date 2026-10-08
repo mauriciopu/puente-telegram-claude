@@ -17,6 +17,15 @@ const A_OPUS      = path.join(AQUI, 'a-opus.py');
 const TRANSCRIBIR = path.join(AQUI, 'transcribir.py');
 const TZ          = CFG.tz || 'America/Caracas';
 const PY          = CFG.python || 'python';   // el instalador detecta cuál sirve
+
+// Todo lo ajustable vive en telegram.json; aquí solo quedan los valores por
+// defecto. Lo que no toques se comporta como viene.
+const VOLUMEN   = CFG.volumen         || '+20%';   // edge-tts entrega bajo
+const VELOCIDAD = CFG.velocidad       || '+12%';   // a 0% suena funerario
+const TROZO_MAX = CFG.trozo_max       || 3500;     // Telegram corta en 4096
+const TIMEOUT   = CFG.timeout_ms      || 300000;   // 5 min por respuesta
+const ESPERA_TG = CFG.espera_telegram || 50;       // long polling, en segundos
+const WHISPER   = CFG.modelo_whisper  || 'medium'; // medium | small | large-v3
 const WIN         = process.platform === 'win32';
 
 // ───── Candado opcional ──────────────────────────────────────────
@@ -158,7 +167,7 @@ function preguntar(texto) {
 
     const hijo = spawn('claude', args, { cwd: REPO, shell: WIN, windowsHide: true });
     let salida = '', error = '';
-    const reloj = setTimeout(() => { try { hijo.kill(); } catch (e) {} }, 300000);
+    const reloj = setTimeout(() => { try { hijo.kill(); } catch (e) {} }, TIMEOUT);
 
     hijo.stdout.on('data', (d) => salida += d);
     hijo.stderr.on('data', (d) => error  += d);
@@ -204,7 +213,7 @@ async function enviarVoz(chatId, texto) {
     // El texto va por --file: con --text se rompen los acentos en Windows.
     await correr(PY, ['-m', 'edge_tts',
       '--voice', CFG.voz || 'es-VE-SebastianNeural',
-      `--rate=${CFG.velocidad || '+12%'}`, '--volume=+20%',
+      `--rate=${VELOCIDAD}`, `--volume=${VOLUMEN}`,
       '--file', txt, '--write-media', mp3]);
     const dur = (await correr(PY, [A_OPUS, mp3, ogg])).trim();
     await tgArchivo('sendVoice', { chat_id: chatId, duration: dur },
@@ -217,7 +226,7 @@ async function enviarVoz(chatId, texto) {
 }
 
 // ───── Telegram corta en 4096 caracteres ─────────────────────────
-function trozos(t, max = 3500) {
+function trozos(t, max = TROZO_MAX) {
   const partes = [];
   while (t.length > max) {
     let corte = t.lastIndexOf('\n', max);
@@ -243,7 +252,7 @@ async function atender(msg) {
       const entrada = path.join(os.tmpdir(), 'in_' + crypto.randomUUID() + '.oga');
       try {
         await bajar(`https://api.telegram.org/file/bot${CFG.token}/${r.result.file_path}`, entrada);
-        texto = (await correr(PY, [TRANSCRIBIR, entrada])).trim();
+        texto = (await correr(PY, [TRANSCRIBIR, entrada, WHISPER])).trim();
       } catch (e) { console.error('transcribir:', e.message); }
       finally { try { fs.unlinkSync(entrada); } catch (e) {} }
     }
@@ -315,7 +324,7 @@ async function atender(msg) {
 async function bucle() {
   for (;;) {
     try {
-      const r = await tg('getUpdates', { offset: estado.offset + 1, timeout: 50 });
+      const r = await tg('getUpdates', { offset: estado.offset + 1, timeout: ESPERA_TG });
       for (const u of (r.result || [])) {
         estado.offset = u.update_id; guardar();
         if (u.message) await atender(u.message);

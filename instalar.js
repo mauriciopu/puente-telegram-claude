@@ -214,32 +214,62 @@ async function main() {
   ok(`Enlazado con ${fuerte(quien.first_name || 'tu cuenta')}  ${gris('· chat_id ' + chatId)}`);
 
   // ── 4. Preferencias ────────────────────────────────────────────
-  titulo('4 · Cuatro preguntas');
+  let _n = 3;
+  const sig = () => ++_n;
 
+  titulo('4 · Cómo lo quieres');
+  console.log(gris('  Entre corchetes va lo que te pongo si solo le das Enter.'));
+  console.log(gris('  Nada de esto es para siempre: todo vive en telegram.json y se'));
+  console.log(gris('  cambia editando ese archivo y reiniciando el bot.'));
+
+  console.log('');
+  console.log(fuerte('  La carpeta'));
+  console.log(gris('  Lo que haya ahí dentro es lo que Claude podrá leer cuando le'));
+  console.log(gris('  preguntes por tus cosas. Apunta a tu bóveda o a tu proyecto,'));
+  console.log(gris('  nunca a la raíz del disco.'));
   const carpeta = await texto('¿Qué carpeta puede leer Claude?', '..');
   const abs = path.resolve(AQUI, carpeta);
   if (!fs.existsSync(abs)) { mal(`No existe: ${abs}`); process.exit(1); }
   nota(`→ ${abs}`);
 
-  const modelo = await texto('¿Qué modelo? (sonnet / opus / haiku)', 'sonnet');
+  console.log('');
+  console.log(fuerte('  El modelo'));
+  console.log(gris('  sonnet  equilibrado, va bien para el uso diario'));
+  console.log(gris('  opus    más capaz y más lento, para análisis largos'));
+  console.log(gris('  haiku   el más rápido, para respuestas cortas'));
+  const modelo = await texto('¿Cuál usamos?', 'sonnet');
 
+  console.log('');
+  console.log(fuerte('  La hora'));
+  console.log(gris('  Con esto el bot sabe qué hora es cada vez que le escribes. Si'));
+  console.log(gris('  queda mal, te va a dar los buenos días a las nueve de la noche.'));
   const tz = await texto('¿Tu zona horaria?',
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Caracas');
 
-  const hablar = await si('¿Quieres que te conteste también con nota de voz?', true);
+  console.log('');
+  console.log(fuerte('  Las notas de voz'));
+  console.log(gris('  Además del texto te manda la respuesta hablada. Es lo que más'));
+  console.log(gris('  cambia el uso: la oyes manejando o caminando. Si dices que no,'));
+  console.log(gris('  el bot funciona igual, solo que escribiendo.'));
+  const hablar = await si('¿Te contesto también con nota de voz?', true);
+
   let voz = 'es-VE-SebastianNeural';
   if (hablar) {
-    console.log(gris('    es-VE-SebastianNeural · es-CO-GonzaloNeural · es-MX-JorgeNeural · es-ES-AlvaroNeural'));
+    console.log(gris('    es-VE-SebastianNeural   venezolana'));
+    console.log(gris('    es-CO-GonzaloNeural     colombiana, la más neutra'));
+    console.log(gris('    es-MX-JorgeNeural       mexicana'));
+    console.log(gris('    es-ES-AlvaroNeural      española'));
+    console.log(gris('    (hay muchas más: python -m edge_tts --list-voices)'));
     voz = await texto('  ¿Cuál voz?', voz);
   }
 
   // ── Candado, opcional ──────────────────────────────────────────
   console.log('');
+  console.log(fuerte('  El candado'));
   console.log(gris('  El bot ya solo te atiende a ti: nadie más puede escribirle.'));
   console.log(gris('  El candado cubre otra cosa: que alguien que agarre tu teléfono'));
   console.log(gris('  desbloqueado tampoco pueda entrar. Pide una frase para abrir y'));
-  console.log(gris('  se vuelve a cerrar solo tras un rato sin usarlo.'));
-  console.log('');
+  console.log(gris('  se cierra solo tras un rato sin usarlo.'));
 
   const auth = { enabled: false };
   if (await si('¿Le pongo candado?', false)) {
@@ -256,21 +286,91 @@ async function main() {
     }
     auth.enabled = true;
     auth.passhash = crypto.createHash('sha256').update(frase).digest('hex');
-
     const mins = await texto('  ¿A los cuántos minutos sin usarlo se cierra? (0 = nunca)', '30');
     auth.lock_minutes = Math.max(0, parseInt(mins, 10) || 0);
     auth.respuesta = '⚙️ Servicio no disponible por ahora.';
-
     ok(`Candado puesto${auth.lock_minutes ? `, cierra a los ${auth.lock_minutes} min` : ', sin caducidad'}`);
-    nota('Para abrir, le escribes la frase al bot. Él la borra del chat al validarla.');
+    nota('Para abrir le escribes la frase. El bot la borra del chat al validarla.');
     nota('Para cerrar a mano: /cerrar');
   } else {
     nota('Sin candado. Lo puedes encender después en telegram.json.');
   }
 
+  // ── Ajustes finos, para quien los quiera ───────────────────────
+  const fino = {
+    velocidad: '+12%', volumen: '+20%', tools: 'Read,Grep,Glob',
+    transcribir: false, modelo_whisper: 'medium',
+    timeout_ms: 300000, trozo_max: 3500, espera_telegram: 50,
+    prompt: 'Eres mi asistente personal por Telegram. Antes de responder algo sobre '
+          + 'mis cosas, lee los archivos del proyecto en vez de suponer. FORMATO '
+          + 'OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa hablada '
+          + 'natural SIN markdown, sin listas, sin encabezados, sin emojis: tu texto '
+          + 'se convierte en nota de voz. Como si hablaras por telefono.'
+  };
+
+  titulo(sig() + ' · Ajustes finos');
+  console.log(gris('  Todo esto ya trae valores que funcionan. Si dices que no, se'));
+  console.log(gris('  quedan así, y los puedes cambiar cuando quieras en el archivo.'));
+  console.log('');
+
+  if (await si('¿Quieres revisarlos uno por uno?', false)) {
+    if (hablar) {
+      console.log('');
+      console.log(fuerte('  Velocidad y volumen de la voz'));
+      console.log(gris('  A 0% estas voces suenan lentas y funerarias; +12% las deja'));
+      console.log(gris('  en ritmo de conversación. El volumen sube porque edge-tts'));
+      console.log(gris('  entrega bajo y en la calle no se oye.'));
+      fino.velocidad = await texto('  Velocidad', fino.velocidad);
+      fino.volumen   = await texto('  Volumen', fino.volumen);
+    }
+
+    console.log('');
+    console.log(fuerte('  Qué puede hacer Claude'));
+    console.log(gris('  Read,Grep,Glob = solo leer. Es lo recomendado, y de largo.'));
+    console.log(gris('  Añadir Write o Bash le deja cambiar archivos y ejecutar'));
+    console.log(gris('  comandos desde un chat de teléfono. Piénsalo dos veces.'));
+    fino.tools = await texto('  Herramientas', fino.tools);
+    if (/write|bash|edit/i.test(fino.tools)) {
+      nota('Le acabas de dar permiso de escritura. Que sea a propósito.');
+    }
+
+    console.log('');
+    console.log(fuerte('  Entender tus notas de voz'));
+    console.log(gris('  Transcribe en tu máquina con faster-whisper; el audio no sale'));
+    console.log(gris('  de ahí. La primera vez descarga el modelo: medium pesa ~1,5 GB'));
+    console.log(gris('  y small ~500 MB, más rápido pero menos fino.'));
+    fino.transcribir = await si('  ¿Lo activo?', false);
+    if (fino.transcribir) {
+      fino.modelo_whisper = await texto('  ¿Qué modelo? (medium / small / large-v3)', 'medium');
+      nota('Falta instalarlo:  ' + python + ' -m pip install faster-whisper');
+    }
+
+    console.log('');
+    console.log(fuerte('  Cómo le hablas a Claude'));
+    console.log(gris('  Esta instrucción se le añade en cada mensaje. La regla de "sin'));
+    console.log(gris('  markdown" es la que hace que la nota de voz suene bien: si la'));
+    console.log(gris('  quitas, el TTS te lee los asteriscos en voz alta.'));
+    if (await si('  ¿Quieres escribir la tuya?', false)) {
+      console.log(gris('    En una sola línea. Las comillas dobles se cambian solas.'));
+      const propio = await texto('  Instrucción:');
+      if (propio) fino.prompt = propio.replace(/"/g, "'");
+    }
+
+    console.log('');
+    console.log(fuerte('  Tiempos'));
+    console.log(gris('  Cuánto espera una respuesta antes de rendirse, y cada cuántos'));
+    console.log(gris('  caracteres parte los mensajes largos (Telegram corta en 4096).'));
+    const seg = parseInt(await texto('  Segundos de espera por respuesta', '300'), 10);
+    fino.timeout_ms = (seg > 0 ? seg : 300) * 1000;
+    const tr = parseInt(await texto('  Partir mensajes cada N caracteres', '3500'), 10);
+    fino.trozo_max = (tr > 0 && tr < 4096) ? tr : 3500;
+  } else {
+    nota('Listo, se quedan los recomendados.');
+  }
+
   // ── 5. Dependencias de Python ──────────────────────────────────
   if (hablar) {
-    titulo('5 · Instalando la voz');
+    titulo(sig() + ' · Instalando la voz');
     console.log(gris(`  ${python} -m pip install edge-tts av`));
     console.log('');
     try {
@@ -284,7 +384,7 @@ async function main() {
   }
 
   // ── 6. Escribir la configuración ───────────────────────────────
-  titulo(`${hablar ? '6' : '5'} · Guardando la configuración`);
+  titulo(sig() + ' · Guardando la configuración');
 
   if (fs.existsSync(CFG_PATH)) {
     const copia = CFG_PATH + '.respaldo-' + Date.now();
@@ -296,26 +396,27 @@ async function main() {
     token, chat_id: chatId,
     repo: carpeta,
     modelo,
-    tools: 'Read,Grep,Glob',
+    tools: fino.tools,
     tz,
     python,
     voz,
-    velocidad: '+12%',
+    velocidad: fino.velocidad,
+    volumen: fino.volumen,
     hablar,
-    transcribir: false,
+    transcribir: fino.transcribir,
+    modelo_whisper: fino.modelo_whisper,
+    timeout_ms: fino.timeout_ms,
+    trozo_max: fino.trozo_max,
+    espera_telegram: fino.espera_telegram,
     auth,
-    prompt: 'Eres mi asistente personal por Telegram. Antes de responder algo sobre '
-          + 'mis cosas, lee los archivos del proyecto en vez de suponer. FORMATO '
-          + 'OBLIGATORIO: respuestas CORTAS, maximo 150 palabras, en prosa hablada '
-          + 'natural SIN markdown, sin listas, sin encabezados, sin emojis: tu texto '
-          + 'se convierte en nota de voz. Como si hablaras por telefono.'
+    prompt: fino.prompt
   };
   fs.writeFileSync(CFG_PATH, JSON.stringify(cfg, null, 2) + '\n', 'utf8');
   ok('telegram.json escrito');
   nota('Tiene tu token dentro. Ya está en el .gitignore: no lo subas a ningún lado.');
 
   // ── 7. Prueba de punta a punta ─────────────────────────────────
-  titulo(`${hablar ? '7' : '6'} · Probando`);
+  titulo(sig() + ' · Probando');
 
   await tg(token, 'sendMessage', { chat_id: chatId, text: 'Prueba del instalador: el canal de texto funciona.' });
   ok('Mensaje de texto enviado — míralo en Telegram');
@@ -341,7 +442,7 @@ async function main() {
   }
 
   // ── 8. Arrancar ────────────────────────────────────────────────
-  titulo(`${hablar ? '8' : '7'} · Arrancar`);
+  titulo(sig() + ' · Arrancar');
 
   let haypm2 = false;
   try { await correr('pm2', ['-v'], { shell: WIN }); haypm2 = true; } catch (e) {}
