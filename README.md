@@ -126,6 +126,11 @@ BotFather es un bot oficial de Telegram que sirve para fabricar otros bots. Se u
 2. Toca la **lupa** de buscar (arriba del todo).
 3. Escribe `BotFather`.
 4. Van a salir varios resultados parecidos. **Elige el que se llama exactamente `BotFather` y tiene el check azul de verificado al lado del nombre.** Los demás son imitaciones.
+
+   Este es el bueno, con el check azul pegado al nombre:
+
+   ![Perfil de BotFather con el check azul de verificado](imagenes/botfather-perfil.png)
+
 5. Se abre el chat, vacío. Abajo, donde normalmente escribes, hay un **botón azul que dice INICIAR** (o START en inglés). Tócalo.
 6. Te responde de una con un mensaje largo lleno de comandos. Ya estás dentro.
 7. Ahora sí, escribe `/newbot` en la caja de texto de abajo y envía, como un mensaje normal.
@@ -145,6 +150,16 @@ BotFather   Done! Congratulations on your new bot.
             8123456789:AAH-xxxxxxxxxxxxxxx
             Keep your token secure and store it safely.
 ```
+
+Así se ve de verdad. Cuando mandas `/newbot`, te pide el nombre:
+
+![BotFather responde: Alright, a new bot. How are we going to call it? Please choose a name for your bot](imagenes/botfather-newbot.png)
+
+Le mandas el nombre y entonces te pide el username:
+
+![BotFather responde: Good. Now let's choose a username for your bot. It must end in bot](imagenes/botfather-username.png)
+
+Y con el username te contesta `Done! Congratulations on your new bot`, seguido de **Use this token to access the HTTP API:** y el token en una línea aparte. Esa captura no está aquí a propósito: sería publicar un token real.
 
 El **nombre** puede ser cualquiera, con espacios y acentos. El **username** tiene que ser único en todo Telegram y **terminar en `bot`**; si el que pides ya existe, BotFather te lo dice y pruebas otro. Lo que te devuelve al final es el **token**: esa línea larga con dos puntos en el medio. Cópiala a un bloc de notas.
 
